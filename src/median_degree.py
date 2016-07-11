@@ -1,7 +1,6 @@
 """Manipulate Venmo JSON mesages and analyze the resultant graph object."""
 import time
 import calendar
-from collections import deque
 
 
 class _Vertex(object):
@@ -118,7 +117,7 @@ class VenmoPayments(object):
         """Inialize active payments and Venmo Graph."""
         payment = _Payment(paymentDict)
 
-        self._active = deque([payment])
+        self._active = [payment]
         self._graph = _Graph(payment.nodes)
 
     @property
@@ -137,25 +136,13 @@ class VenmoPayments(object):
         if self._active[-1].createdTime <= payment.createdTime:
             self._active.append(payment)
             while payment.createdTime - self._active[0].createdTime >= 60:
-                self._graph.remove_degrees(self._active.popleft().nodes)
+                self._graph.remove_degrees(self._active.pop(0).nodes)
 
         elif payment.createdTime <= self._active[0].createdTime:
-            self._active.appendleft(payment)
+            self._active.insert(0, payment)
 
-        # sys.version_info >= (3, 5)
-        elif hasattr(deque, 'insert'):
-            i = 1
-            while self.active[-i - 1].createdTime > payment.createdTime:
-                i += 1
-
-            self.active.insert(-i, payment)
-        # sys.version_info < (3, 5)
         else:
-            fresher = [self._active.pop()]
-            nextActive = self._active.pop()
-            while nextActive.createdTime > payment.createdTime:
-                fresher.append(nextActive)
-                nextActive = self._active.pop()
-
-            self._active.extend(
-                fresher.extend([payment, nextActive]).reverse())
+            i = 1
+            while self._active[-i - 1].createdTime > payment.createdTime:
+                i += 1
+            self._active.insert(-i, payment)

@@ -40,4 +40,4 @@ def process_venmo_payments(finName='./venmo_input/venmo-trans.txt',
 
 
 if __name__ == '__main__':
-    process_venmo_payments(*sys.argv)
+    process_venmo_payments(sys.argv[1], sys.argv[2])
