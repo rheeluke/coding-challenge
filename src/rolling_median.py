@@ -32,7 +32,6 @@ def process_venmo_payments(finName='./venmo_input/venmo-trans.txt',
                     paymentDict['actor']
                     paymentDict['target']
                     paymentDict['created_time']
-                    break
                 except KeyError:
                     continue
 
