@@ -52,7 +52,7 @@ class _Graph(object):
         n = len(self._vertices)
         median = self._degreesDesc[n // 2]
 
-        if not n % 2:
+        if n % 2 == 0:
             median = round((median + self._degreesDesc[n//2 - 1]) / 2.0, 2)
 
         return median
@@ -83,7 +83,7 @@ class _Graph(object):
         if degree < 1:
             raise ValueError('degree must be 1 or greater')
         lo = 0
-        hi = len(self._degreesDesc)
+        hi = len(self._degreesDesc) - 1
 
         while lo < hi:
             mid = (lo + hi + 1) // 2
@@ -111,7 +111,11 @@ class _Graph(object):
                 hi = mid
             else:
                 lo = mid + 1
-        return lo - 1
+
+        if lo < length and degree == self._degreesDesc[lo]:
+            return lo
+        else:
+            return lo - 1
 
     def add_degrees(self, actor, target):
         """Add edges and update degree list."""
@@ -189,9 +193,8 @@ class VenmoPayments(object):
             while (self._activeHeap and
                    self._maxTime - self._activeHeap[0] >= 60):
                 removeTime = heapq.heappop(self._activeHeap)
-                activeList = self._activeDict[removeTime]
-                self._graph.remove_degrees(*activeList.pop())
-                if not activeList:
+                self._graph.remove_degrees(*self._activeDict[removeTime].pop())
+                if not self._activeDict[removeTime]:
                     del self._activeDict[removeTime]
 
         heapq.heappush(self._activeHeap, payment.createdTime)
