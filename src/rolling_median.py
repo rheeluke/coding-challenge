@@ -12,6 +12,8 @@ def process_venmo_payments(finName, foutName):
         jsonString = fin.readline()
         while jsonString:
             paymentDict = json.loads(jsonString)
+            jsonString = fin.readline()
+
             try:
                 paymentDict['actor']
                 paymentDict['target']
@@ -22,7 +24,6 @@ def process_venmo_payments(finName, foutName):
             venmoGraph.add_payment(paymentDict)
             fout.write('%.2f' % venmoGraph.medianDegree)
 
-            jsonString = fin.readline()
             if jsonString:
                 fout.write('\n')
 
