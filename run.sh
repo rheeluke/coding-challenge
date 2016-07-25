@@ -5,5 +5,3 @@
 
 # I'll execute my programs, with the input directory venmo_input and output the files in the directory venmo_output
 python ./src/rolling_median.py ./venmo_input/venmo-trans.txt ./venmo_output/output.txt
-
-# python ./src/rolling_median.py ./insight_testsuite/tests/test-4-venmo-trans/venmo_input/venmo-trans.txt ./insight_testsuite/tests/test-4-venmo-trans/venmo_output/output.txt

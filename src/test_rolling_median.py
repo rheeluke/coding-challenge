@@ -40,47 +40,49 @@ class TestGraph(unittest.TestCase):
 
     def test_addRemove_degrees(self):
         """Check vertex list, degrees list, and median degree."""
-        graph = median_degree._Graph(('a', 'b'))
+        graph = median_degree._Graph()
+        graph.add_degrees('a', 'b')
         self.assertIn('a', graph._vertices.keys())
         self.assertIn('b', graph._vertices.keys())
         self.assertEqual(graph._degreesDesc, [1, 1])
         self.assertEqual(graph.median, 1.0)
 
-        graph.remove_degrees(('a', 'b'))
+        graph.remove_degrees('a', 'b')
         self.assertEqual(graph._vertices, {})
         self.assertEqual(graph._degreesDesc, [])
 
-        graph.add_degrees(('a', 'b'))
-        graph.add_degrees(('a', 'b'))
+        graph.add_degrees('a', 'b')
+        graph.add_degrees('a', 'b')
         self.assertEqual(graph._degreesDesc, [1, 1])
         self.assertEqual(graph.median, 1.0)
 
-        graph.add_degrees(('a', 'c'))
+        graph.add_degrees('a', 'c')
         self.assertEqual(graph._degreesDesc, [2, 1, 1])
         self.assertEqual(graph.median, 1)
 
-        graph.remove_degrees(('a', 'b'))
+        graph.remove_degrees('a', 'b')
         self.assertEqual(graph._degreesDesc, [2, 1, 1])
         self.assertEqual(graph.median, 1)
 
-        graph.add_degrees(('a', 'b'))
-        graph.remove_degrees(('a', 'c'))
+        graph.add_degrees('a', 'b')
+        self.assertEqual(graph._degreesDesc, [2, 1, 1])
+        graph.remove_degrees('a', 'c')
         self.assertEqual(graph._degreesDesc, [1, 1])
         self.assertEqual(graph.median, 1.0)
 
-        graph.add_degrees(('a', 'c'))
-        graph.add_degrees(('b', 'd'))
+        graph.add_degrees('a', 'c')
+        graph.add_degrees('b', 'd')
         self.assertEqual(graph._degreesDesc, [2, 2, 1, 1])
         self.assertEqual(graph.median, 1.5)
 
-        graph.add_degrees(('a', 'e'))
-        graph.add_degrees(('a', 'f'))
-        graph.add_degrees(('c', 'd'))
-        graph.add_degrees(('a', 'd'))
+        graph.add_degrees('a', 'e')
+        graph.add_degrees('a', 'f')
+        graph.add_degrees('c', 'd')
+        graph.add_degrees('a', 'd')
         self.assertEqual(graph._degreesDesc, [5, 3, 2, 2, 1, 1])
         self.assertEqual(graph.median, 2.0)
 
-        graph.remove_degrees(('a', 'f'))
+        graph.remove_degrees('a', 'f')
         self.assertEqual(graph._degreesDesc, [4, 3, 2, 2, 1])
         self.assertEqual(graph.median, 2)
 
@@ -94,7 +96,9 @@ class TestPayment(unittest.TestCase):
             "created_time": "2016-03-29T06:04:39Z",
             "target": "Joey_Ostreicher", "actor": "Gwen-Mennear"})
         self.assertEqual(payment.createdTime, 1459231479)
-        self.assertEqual(payment.nodes, ('Gwen-Mennear', 'Joey_Ostreicher'))
+        self.assertEqual(
+            (payment.actor, payment.target),
+            ('Gwen-Mennear', 'Joey_Ostreicher'))
 
 
 class TestVenmoPayments(unittest.TestCase):
@@ -105,39 +109,40 @@ class TestVenmoPayments(unittest.TestCase):
         ab = {"created_time": "2016-03-29T06:04:39Z",
               "target": "b", "actor": "a"}
         payment = median_degree._Payment(ab)
-        venmo = median_degree.VenmoPayments(ab)
-        self.assertEqual(len(venmo._active), 1)
+        venmo = median_degree.VenmoPayments()
+        venmo.add_payment(ab)
+        self.assertEqual(len(venmo._activeDict), 1)
         self.assertEqual(
-            [venmo._active[0].createdTime, venmo._active[0].nodes],
-            [payment.createdTime, payment.nodes])
+            venmo._activeDict,
+            {payment.createdTime: [(payment.actor, payment.target)]})
         self.assertEqual(venmo.medianDegree, 1.0)
 
         ab1 = ab
         ab1['created_time'] = '2016-03-28T06:04:39Z'
         venmo.add_payment(ab1)
-        self.assertEqual(len(venmo._active), 1)
-        self.assertEqual(venmo._active[0].createdTime, payment.createdTime)
+        self.assertEqual(len(venmo._activeHeap), 1)
+        self.assertEqual(venmo._activeHeap[0], payment.createdTime)
         self.assertEqual(venmo.medianDegree, 1.0)
 
         ab1 = ab
         ab1['created_time'] = '2016-03-29T06:03:39Z'
         venmo.add_payment(ab1)
-        self.assertEqual(len(venmo._active), 1)
-        self.assertEqual(venmo._active[0].createdTime, payment.createdTime)
+        self.assertEqual(len(venmo._activeHeap), 1)
+        self.assertEqual(venmo._activeHeap[0], payment.createdTime)
         self.assertEqual(venmo.medianDegree, 1.0)
 
         ab['created_time'] = '2016-03-29T06:05:39Z'
         venmo.add_payment(ab)
         payment = median_degree._Payment(ab)
-        self.assertEqual(len(venmo._active), 1)
-        self.assertEqual(venmo._active[0].createdTime, payment.createdTime)
+        self.assertEqual(len(venmo._activeHeap), 1)
+        self.assertEqual(venmo._activeHeap[0], payment.createdTime)
         self.assertEqual(venmo.medianDegree, 1.0)
 
         ab['created_time'] = '2016-04-1T00:01:00Z'
         venmo.add_payment(ab)
         payment = median_degree._Payment(ab)
-        self.assertEqual(len(venmo._active), 1)
-        self.assertEqual(venmo._active[0].createdTime, payment.createdTime)
+        self.assertEqual(len(venmo._activeHeap), 1)
+        self.assertEqual(venmo._activeHeap[0], payment.createdTime)
         self.assertEqual(venmo.medianDegree, 1.0)
 
         AB = [ab]
@@ -146,8 +151,8 @@ class TestVenmoPayments(unittest.TestCase):
         AB[1]['created_time'] = '2016-04-1T00:01:30Z'
         venmo.add_payment(AB[1])
         P.append(median_degree._Payment(AB[1]))
-        self.assertEqual(len(venmo._active), 2)
-        VcT = [i.createdTime for i in venmo._active]
+        self.assertEqual(len(venmo._activeHeap), 2)
+        VcT = [i for i in venmo._activeHeap]
         PcT = [i.createdTime for i in P]
         self.assertEqual(VcT, PcT)
         self.assertEqual(venmo.medianDegree, 1.0)
@@ -156,10 +161,11 @@ class TestVenmoPayments(unittest.TestCase):
         AB[0]['created_time'] = '2016-04-1T00:00:31Z'
         venmo.add_payment(AB[0])
         P.insert(0, median_degree._Payment(AB[0]))
-        self.assertEqual(len(venmo._active), 3)
-        VcT = [i.createdTime for i in venmo._active]
+        self.assertEqual(len(venmo._activeHeap), 3)
+        VcT = [i for i in venmo._activeHeap]
         PcT = [i.createdTime for i in P]
-        self.assertEqual(VcT, PcT)
+        for time in PcT:
+            self.assertIn(time, VcT)
         self.assertEqual(venmo.medianDegree, 1.0)
 
         del AB[0]
@@ -171,10 +177,11 @@ class TestVenmoPayments(unittest.TestCase):
         del P[0]
         P.extend([
             median_degree._Payment(AB[-2]), median_degree._Payment(AB[-1])])
-        self.assertEqual(len(venmo._active), 4)
-        VcT = [i.createdTime for i in venmo._active]
+        self.assertEqual(len(venmo._activeHeap), 4)
+        VcT = [i for i in venmo._activeHeap]
         PcT = [i.createdTime for i in P]
-        self.assertEqual(VcT, PcT)
+        for time in PcT:
+            self.assertIn(time, PcT)
         self.assertEqual(venmo.medianDegree, 1.0)
 
 
